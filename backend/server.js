@@ -157,21 +157,29 @@ app.put('/api/students/:id', upload.single('profile_img'), (req, resp) => {
 });
 
 //delete student 
-app.delete('/api/students/:id',(req,resp)=>{
+app.delete('/api/students/:id', (req, resp) => {
     const studentId = req.params.id;
-
-    const sql = "DELETE FROM students WHERE student_id=?";
-
-    db.query(sql,[studentId],(error,result)=>{
-        if (error){
-            console.log("Error inserting student:",error);
+    const deleteResultSql = "DELETE FROM student_result WHERE student_id=?";
+    
+    db.query(deleteResultSql, [studentId], (err, res) => {
+        if (err) {
+            console.log("Error deleting result:", err);
+            return resp.status(500).send({ error: "Failed to delete student marks." });
         }
-        if (result.affectedRows===0){
-            return resp.status(404).send({ error: "Student not Found!" });
-        }
-        resp.status(200).send({message:"Student Deleted Successfully."})
-    })
 
+        const deleteStudentSql = "DELETE FROM students WHERE student_id=?";
+        
+        db.query(deleteStudentSql, [studentId], (error, result) => {
+            if (error) {
+                console.log("Error deleting student:", error);
+                return resp.status(500).send({ error: "Internal Server Error" });
+            }
+            if (result.affectedRows === 0) {
+                return resp.status(404).send({ error: "Student not Found!" });
+            }
+            resp.status(200).send({ message: "Student and their marks deleted successfully." });
+        });
+    });
 });
 
 //to get report card 
